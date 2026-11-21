@@ -6,6 +6,11 @@ export const HTML = String.raw`<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400;1,600;1,700&display=swap">
 <title>ASL Interpreter Finder · ACDHH demo</title>
 <link rel="stylesheet" href="/app.css">
 <script src="/app.js" defer></script>
@@ -13,7 +18,7 @@ export const HTML = String.raw`<!doctype html>
 <body>
 <a class="skip" href="#main">Skip to main content</a>
 <header class="top">
-  <div class="brand"><strong>Interpreter Finder</strong><span class="demo">Demo · fake data · no real people</span></div>
+  <div class="brand"><strong>Interpreter Finder</strong><span class="live"><i aria-hidden="true"></i><b>LIVE</b><span>Demo · fake data</span></span></div>
   <nav aria-label="Main">
     <a href="#/" data-nav="find">Find</a>
     <a href="#/status" data-nav="status">My status</a>
@@ -31,86 +36,115 @@ export const HTML = String.raw`<!doctype html>
 </html>`;
 
 export const CSS = String.raw`
-:root{--bg:#f4f6f9;--fg:#14202e;--card:#fff;--line:#5b6b7d;--soft:#d5dce5;--brand:#0b4f8a;--brandfg:#fff;--mute:#44546a;
---ok-bg:#dff3e4;--ok:#0a5c27;--warn-bg:#fff1cc;--warn:#6b4600;--bad-bg:#fde3e3;--bad:#8a1212;--off-bg:#e8ecf1;--off:#33435a}
-html[data-contrast=high]{--bg:#000;--fg:#fff;--card:#000;--line:#fff;--soft:#fff;--brand:#ffe600;--brandfg:#000;--mute:#fff;
---ok-bg:#000;--ok:#7dff9a;--warn-bg:#000;--warn:#ffe600;--bad-bg:#000;--bad:#ff9a9a;--off-bg:#000;--off:#fff}
-html{font-size:100%}
+:root{color-scheme:dark;--bg:#0a0a0a;--fg:#f5f2ee;--mute:#b4aca2;--gold:#a78b71;--gold-lt:#c9b8a0;--gold-hv:#e8d5b7;
+--glass:rgba(255,255,255,.03);--glass-line:rgba(255,255,255,.1);--field-bg:rgba(255,255,255,.06);--field-line:rgba(255,255,255,.5);
+--ok:#4ade80;--ok-bg:rgba(74,222,128,.1);--warn:#fcd34d;--warn-bg:rgba(252,211,77,.1);--bad:#fca5a5;--bad-bg:rgba(248,113,113,.12);--off:#cbd5e1;--off-bg:rgba(203,213,225,.08);
+--serif:"Playfair Display",Georgia,"Times New Roman",serif;--sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+--ease:cubic-bezier(.4,0,.2,1);--out:cubic-bezier(.165,.84,.44,1)}
+html[data-contrast=high]{--bg:#000;--fg:#fff;--mute:#fff;--gold:#ffe600;--gold-lt:#ffe600;--gold-hv:#ffe600;--glass:#000;--glass-line:#fff;--field-bg:#000;--field-line:#fff;
+--ok:#7dff9a;--ok-bg:#000;--warn:#ffe600;--warn-bg:#000;--bad:#ff9a9a;--bad-bg:#000;--off:#fff;--off-bg:#000}
+html{font-size:100%;scroll-padding-top:100px}
 html[data-text=large]{font-size:125%}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;background:var(--bg);color:var(--fg)}
-a{color:var(--brand)}
-html[data-contrast=high] a{color:#7fd0ff}
-:focus-visible{outline:3px solid #ff8a00;outline-offset:2px}
+body{margin:0;font-family:var(--sans);font-weight:400;line-height:1.55;background-color:var(--bg);color:var(--fg);
+background-image:radial-gradient(rgba(255,255,255,.08) 1px,transparent 1px);background-size:32px 32px}
+html[data-contrast=high] body{background-image:none}
+a{color:var(--gold-hv)}
+:focus-visible{outline:3px solid var(--gold-hv);outline-offset:3px}
 html[data-contrast=high] :focus-visible{outline-color:#fff;box-shadow:0 0 0 6px #000}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.skip{position:absolute;left:-999px;top:0;background:#fff;color:#000;padding:12px;z-index:50}
+.skip{position:absolute;left:-999px;top:0;background:#fff;color:#0a0a0a;padding:12px;z-index:50}
 .skip:focus{left:8px;top:8px}
-.top{background:var(--card);border-bottom:2px solid var(--line);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
-.brand{display:flex;flex-direction:column}
-.demo{font-size:.85rem;color:var(--mute)}
-nav{display:flex;gap:6px;flex:1}
-nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:8px;text-decoration:none;font-weight:600;border:2px solid transparent}
-nav a[aria-current=page]{border-color:var(--brand);background:var(--brand);color:var(--brandfg)}
+/* glass: every layer that overlaps something gets blur */
+.top,.card,.tile,.bar,dialog,.live{background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.top{border-bottom:1px solid var(--glass-line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;z-index:30}
+@media(min-width:760px){.top{position:sticky;top:0;padding:10px 40px}}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand strong{font-family:var(--serif);font-style:italic;font-weight:700;font-size:1.5rem;color:var(--gold-hv);line-height:1.1}
+.live{display:inline-flex;align-items:center;gap:6px;padding:1px 10px;border:1px solid var(--glass-line);border-radius:999px;font-size:.75rem;color:var(--mute);align-self:flex-start}
+.live i{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 2s ease-in-out infinite}
+.live b{color:#4ade80;font-size:.7rem;letter-spacing:.14em}
+html[data-contrast=high] .live i,html[data-contrast=high] .live b{background:#7dff9a;color:#7dff9a}
+html[data-contrast=high] .live b{background:none}
+nav{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;text-decoration:none;font-weight:500;font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--fg);border:1px solid transparent}
+nav a:hover{border-color:var(--gold-lt)}
+nav a[aria-current=page]{background:#fff;color:#0a0a0a;font-weight:700}
 .tools{display:flex;gap:6px}
-main{max-width:980px;margin:0 auto;padding:14px 14px 110px}
+main{max-width:980px;margin:0 auto;padding:22px 16px 120px}
 main:focus,h1:focus{outline:none}
-h1{font-size:1.6rem;margin:.4em 0}
-h2{font-size:1.25rem;margin:.2em 0 .5em}
-h3{font-size:1.15rem;margin:0}
-footer{max-width:980px;margin:0 auto;padding:12px 14px 30px;color:var(--mute);font-size:.9rem}
-.card{background:var(--card);border:2px solid var(--soft);border-radius:12px;padding:14px;margin:0 0 12px}
-html[data-contrast=high] .card{border-color:#fff}
-.ai{border-color:var(--brand)}
-label,legend{display:block;font-weight:600;margin:8px 0 4px}
-input,select,textarea{width:100%;min-height:44px;padding:8px 10px;font:inherit;color:var(--fg);background:var(--card);border:2px solid var(--line);border-radius:8px}
+h1{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2rem,6.5vw,3.6rem);line-height:1.1;margin:.3em 0 .25em}
+h2{font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.5rem;margin:.2em 0 .5em;color:var(--gold-hv)}
+h3{font-family:var(--sans);font-weight:700;font-size:1.2rem;margin:0}
+.gold{color:var(--gold)}
+.lede{color:var(--mute);font-size:1.05rem;max-width:40em;margin:0 0 18px}
+footer{max-width:980px;margin:0 auto;padding:16px 16px 40px;color:var(--mute);font-size:.9rem;border-top:1px solid var(--glass-line)}
+.card{border:1px solid var(--glass-line);border-radius:24px;padding:18px;margin:0 0 14px}
+.ai{border-color:rgba(167,139,113,.4);box-shadow:0 0 100px rgba(167,139,113,.2)}
+html[data-contrast=high] .card,html[data-contrast=high] .tile{border-color:#fff}
+label,legend{display:block;font-weight:600;margin:10px 0 4px}
+input,select,textarea{width:100%;min-height:44px;padding:8px 14px;font:inherit;color:var(--fg);background:var(--field-bg);border:1px solid var(--field-line);border-radius:16px}
+input::placeholder,textarea::placeholder{color:var(--mute);opacity:1}
 textarea{resize:vertical}
-input[type=checkbox]{width:24px;height:24px;min-height:0;margin:0 8px 0 0;accent-color:var(--brand)}
+input[type=checkbox]{width:24px;height:24px;min-height:0;margin:0 10px 0 0;accent-color:var(--gold-hv)}
 .check{display:flex;align-items:center;min-height:44px;font-weight:400;margin:0}
 .grid{display:grid;grid-template-columns:1fr;gap:0 14px}
 @media(min-width:640px){.grid{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr 1fr}}
-fieldset{border:2px solid var(--soft);border-radius:10px;margin:10px 0;padding:6px 12px}
-.btn,.tools button{min-height:44px;min-width:44px;padding:8px 16px;font:inherit;font-weight:600;border-radius:8px;border:2px solid var(--brand);background:var(--card);color:var(--brand);cursor:pointer}
-html[data-contrast=high] .btn,html[data-contrast=high] .tools button{color:#ffe600;border-color:#ffe600}
-.tools button[aria-pressed=true]{background:var(--brand);color:var(--brandfg)}
-.btn.primary{background:var(--brand);color:var(--brandfg)}
+fieldset{border:1px solid var(--glass-line);border-radius:20px;margin:12px 0;padding:6px 14px}
+legend{padding:0 6px;color:var(--gold-lt)}
+.btn,.tools button{min-height:44px;min-width:44px;padding:8px 20px;font:inherit;font-weight:600;border-radius:999px;border:1px solid var(--gold-lt);background:transparent;color:var(--gold-hv);cursor:pointer}
+.btn:hover,.tools button:hover{border-color:var(--gold-hv);background:rgba(232,213,183,.1)}
+.tools button{font-size:.8rem;padding:6px 14px}
+.tools button[aria-pressed=true],.btn[aria-pressed=true]{background:var(--gold-hv);color:#0a0a0a;border-color:var(--gold-hv)}
+.btn.primary{background:#fff;color:#0a0a0a;border-color:#fff;font-weight:700}
+.btn.primary:hover{background:var(--gold-hv);border-color:var(--gold-hv)}
 .btn.danger{border-color:var(--bad);color:var(--bad)}
-.btn.big{min-height:64px;font-size:1.2rem;flex:1}
-.btn[aria-pressed=true]{background:var(--brand);color:var(--brandfg)}
-.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn.big{min-height:64px;font-size:1.15rem;flex:1}
+.btn:disabled{opacity:.55;cursor:not-allowed}
 .row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
-.chips{list-style:none;display:flex;flex-wrap:wrap;gap:6px;padding:0;margin:8px 0}
-.chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:2px 10px;border:2px solid var(--line);border-radius:999px;background:var(--card);font-size:.95rem}
-button.chip{min-height:44px;cursor:pointer;font:inherit;color:var(--fg)}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-weight:700;border:2px solid;font-size:.95rem}
+.chips{list-style:none;display:flex;flex-wrap:wrap;gap:6px;padding:0;margin:10px 0}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:2px 12px;border:1px solid rgba(167,139,113,.55);border-radius:999px;background:rgba(167,139,113,.1);font-size:.9rem;color:var(--gold-hv)}
+button.chip{min-height:44px;cursor:pointer;font:inherit;color:var(--gold-hv)}
+button.chip:hover{border-color:var(--gold-hv)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:999px;font-weight:700;border:1px solid;font-size:.9rem}
 .badge.now{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
 .badge.today{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
 .badge.booked{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
 .badge.off{background:var(--off-bg);color:var(--off);border-color:var(--off)}
-.warn{background:var(--warn-bg);color:var(--warn);border:2px solid var(--warn);border-radius:8px;padding:6px 10px;margin:8px 0;font-weight:600}
-.bad{background:var(--bad-bg);color:var(--bad);border:2px solid var(--bad);border-radius:8px;padding:6px 10px;margin:8px 0;font-weight:600}
-.good{background:var(--ok-bg);color:var(--ok);border:2px solid var(--ok);border-radius:8px;padding:10px 12px;margin:8px 0;font-weight:600}
+.warn,.bad,.good{border:1px solid;border-radius:16px;padding:8px 14px;margin:10px 0;font-weight:600}
+.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.good{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
 .msg{min-height:1.5em;margin:6px 0 0}
 .muted,.note{color:var(--mute)}
 .meta{margin:4px 0;color:var(--mute)}
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:3px solid var(--brand);padding:10px 14px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;z-index:20}
+.bar{position:fixed;left:0;right:0;bottom:0;border-top:1px solid rgba(167,139,113,.5);padding:12px 16px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;z-index:20;background:rgba(10,10,10,.8)}
 .bar[hidden]{display:none}
-dialog{max-width:560px;width:calc(100% - 24px);border:3px solid var(--brand);border-radius:12px;background:var(--card);color:var(--fg);padding:16px}
-dialog::backdrop{background:rgba(0,0,0,.6)}
-.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+dialog{max-width:560px;width:calc(100% - 24px);border:1px solid rgba(167,139,113,.5);border-radius:32px;background:rgba(18,18,18,.92);color:var(--fg);padding:22px;box-shadow:0 0 100px rgba(167,139,113,.2)}
+dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(10px)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
 @media(min-width:640px){.tiles{grid-template-columns:repeat(4,1fr)}}
-.tile{background:var(--card);border:2px solid var(--soft);border-radius:12px;padding:10px 12px}
-.tile b{display:block;font-size:2rem;line-height:1.1}
+.tile{border:1px solid var(--glass-line);border-radius:24px;padding:14px 16px;color:var(--mute)}
+.tile b{display:block;font-family:var(--serif);font-style:italic;font-size:2.4rem;line-height:1.1;color:var(--gold-hv)}
 .tile.alert{border-color:var(--bad);color:var(--bad)}
-.rbar{display:block;height:12px;background:var(--brand);border-radius:6px;min-width:2px}
+.tile.alert b{color:var(--bad)}
+.rbar{display:block;height:10px;background:linear-gradient(90deg,var(--gold),var(--gold-lt));border-radius:999px;min-width:3px;margin-top:6px}
+html[data-contrast=high] .rbar{background:#ffe600}
 table{width:100%;border-collapse:collapse}
-th,td{text-align:left;padding:8px;border-bottom:1px solid var(--soft);vertical-align:top}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--glass-line);vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.14em;font-weight:500;color:var(--gold-lt)}
 .wrap{overflow-x:auto}
 .plain{list-style:none;padding:0;margin:0}
-.statusbtns{display:flex;flex-direction:column;gap:10px;margin:10px 0}
+.statusbtns{display:flex;flex-direction:column;gap:10px;margin:12px 0}
 @media(min-width:640px){.statusbtns{flex-direction:row}}
 .skeleton{color:var(--mute);padding:20px 0}
-@media (prefers-reduced-motion:no-preference){.btn{transition:background-color .15s}}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes reveal{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){
+  .btn,.tools button,.card,nav a,.chip{transition:background-color .2s var(--ease),border-color .2s var(--ease),box-shadow .2s var(--ease)}
+  .card:hover{border-color:rgba(201,184,160,.35)}
+  main>*:not(.bar):not(dialog){animation:reveal .8s var(--out) both}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 `;
 
@@ -122,7 +156,7 @@ var SERVICES = ["ASL interpreter","CDI/Deaf interpreter","Captioner/CART","Tacti
 var SPECS = ["Medical","Legal","Educational","Mental health","VR/remote","Emergency","Performing arts","DeafBlind"];
 var LEVELS = ["Provisional","Standard","Advanced","Master"];
 var TZ = "America/Phoenix";
-var state = { caps: { ai: false }, filters: blank(), minLevel: "", results: [], selected: [], timer: null, lastJson: "" };
+var state = { caps: { ai: false }, filters: blank(), minLevel: "", results: [], selected: [], names: {}, relaxed: null, token: 0, timer: null, lastJson: "" };
 var main = document.getElementById("main");
 
 function blank() { return { service: null, specialties: [], region: null, when: null, durationMins: null, remote: null, locationType: null, city: null }; }
@@ -147,6 +181,8 @@ function add(e, c) {
   if (Array.isArray(c)) { c.forEach(function (x) { add(e, x); }); return; }
   e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
 }
+// Replace all children. Accepts nodes, strings, null, or arrays of them (native replaceChildren does NOT accept arrays).
+function rc(el) { el.replaceChildren(); for (var i = 1; i < arguments.length; i++) add(el, arguments[i]); }
 function $(s, r) { return (r || document).querySelector(s); }
 function say(msg) { var l = document.getElementById("live"); l.textContent = ""; setTimeout(function () { l.textContent = msg; }, 50); }
 function api(path, body) {
@@ -222,10 +258,11 @@ function viewFind() {
       h("div", null, h("label", { for: "f-remote", text: "Remote or on-site" }),
         h("select", { id: "f-remote", onchange: readForm }, opts([["", "Either"], ["1", "Remote (video) is OK"], ["0", "On-site only"]]))),
       h("div", null, h("label", { for: "f-level", text: "Lowest license level" }), h("select", { id: "f-level", onchange: readForm }, opts(LEVELS, "Any level")))),
-    h("fieldset", null, h("legend", { text: "Specialty (pick any)" }), h("div", { class: "grid grid3" }, specBoxes)));
+    h("fieldset", null, h("legend", { text: "Specialty (pick any; best matches first)" }), h("div", { class: "grid grid3" }, specBoxes)));
 
-  main.replaceChildren(
-    h("h1", { tabindex: "-1", text: "Find an interpreter or captioner" }),
+  rc(main, 
+    h("h1", { tabindex: "-1" }, "Find the ", h("span", { class: "gold" }, "right interpreter"), ", fast."),
+    h("p", { class: "lede", text: "Say what you need. We match you with licensed ASL interpreters and captioners who are free. Contact is always by text or email." }),
     aiBox,
     h("div", { id: "understood" }),
     form,
@@ -277,7 +314,7 @@ function doParse() {
   btn.disabled = true; msg.textContent = "Reading your request…";
   api("/api/ai/parse", { text: text }).then(function (d) {
     state.filters = Object.assign(blank(), d.filters);
-    msg.textContent = "Done. " + d.understood + " You can change anything below.";
+    msg.textContent = d.understood + " You can change anything below.";
     syncForm(); renderChips(); loadResults(false);
   }).catch(function (e) {
     msg.textContent = e.message + " You can use the filters below.";
@@ -300,11 +337,12 @@ function renderChips() {
   if (state.minLevel) chip("License: " + state.minLevel + " or higher", function () { state.minLevel = ""; });
   var box = $("#understood");
   if (!box) return;
-  box.replaceChildren(chips.length ? h("section", { "aria-label": "What we are searching for" }, h("p", { class: "meta", text: "What we are searching for. Select one to remove it:" }), h("ul", { class: "chips" }, chips)) : h("span"));
+  rc(box, chips.length ? h("section", { "aria-label": "What we are searching for" }, h("p", { class: "meta", text: "What we are searching for. Select one to remove it:" }), h("ul", { class: "chips" }, chips)) : h("span"));
 }
 
-function query() {
-  var f = state.filters, p = [];
+function query(f) {
+  f = f || state.filters;
+  var p = [];
   if (f.region) p.push("region=" + encodeURIComponent(f.region));
   if (f.specialties.length) p.push("specialty=" + encodeURIComponent(f.specialties.join(",")));
   if (f.service) p.push("service=" + encodeURIComponent(f.service));
@@ -313,37 +351,72 @@ function query() {
   return "/api/interpreters" + (p.length ? "?" + p.join("&") : "");
 }
 
+// Filters the server does not know about (license level, on-site only).
+function postFilter(list) {
+  if (state.minLevel) { var min = LEVELS.indexOf(state.minLevel); list = list.filter(function (i) { return LEVELS.indexOf(i.level) >= min; }); }
+  if (state.filters.remote === false) list = list.filter(function (i) { return i.region !== "Statewide remote"; });
+  return list;
+}
+
+// When nothing matches, try again with fewer filters, one step at a time.
+function relax() {
+  var f = state.filters, tried = [query(f)], chain = Promise.resolve(null);
+  var steps = [
+    { label: "the time", change: { when: null } },
+    { label: "the time and the type of help", change: { when: null, service: null } },
+    { label: "the time and the type of help. It now also includes Statewide remote people", change: { when: null, service: null, remote: true } }
+  ];
+  steps.forEach(function (st) {
+    chain = chain.then(function (found) {
+      if (found) return found;
+      var q = query(Object.assign({}, f, st.change));
+      if (tried.indexOf(q) >= 0) return null; // this step would not change anything
+      tried.push(q);
+      return api(q).then(function (d) { var l = postFilter(d.interpreters); return l.length ? { label: st.label, list: l } : null; });
+    });
+  });
+  return chain;
+}
+
 function loadResults(silent) {
+  var token = ++state.token; // ignore answers that arrive late
   api(query()).then(function (d) {
-    var list = d.interpreters;
-    if (state.minLevel) { var min = LEVELS.indexOf(state.minLevel); list = list.filter(function (i) { return LEVELS.indexOf(i.level) >= min; }); }
-    if (state.filters.remote === false) list = list.filter(function (i) { return i.region !== "Statewide remote"; });
-    var sig = JSON.stringify(list.map(function (i) { return [i.id, i.avail.text]; })) + state.selected.join();
+    var list = postFilter(d.interpreters);
+    if (list.length) return { list: list, relaxed: null };
+    return relax().then(function (rel) { return { list: rel ? rel.list : [], relaxed: rel }; });
+  }).then(function (res) {
+    if (token !== state.token) return;
+    var sig = JSON.stringify([res.relaxed && res.relaxed.label, res.list.map(function (i) { return [i.id, i.avail.text]; })]) + state.selected.join();
     if (silent && sig === state.lastJson) return; // nothing changed: do not disturb focus
     state.lastJson = sig;
-    state.results = list;
+    state.results = res.list;
+    state.relaxed = res.relaxed;
     renderResults(!silent);
   }).catch(function (e) {
-    if (!silent) { var r = $("#results"); if (r) r.replaceChildren(errBox(e, function () { loadResults(false); })); }
+    if (!silent && token === state.token) { var r = $("#results"); if (r) rc(r, errBox(e, function () { loadResults(false); })); }
   });
 }
+
+function clearAll() { state.filters = blank(); state.minLevel = ""; syncForm(); renderChips(); loadResults(false); }
 
 function renderResults(announce) {
   var box = $("#results");
   if (!box) return;
-  var list = state.results;
-  var head = h("p", { class: "meta", text: list.length + (list.length === 1 ? " person matches." : " people match.") });
+  var list = state.results, rel = state.relaxed;
   if (!list.length) {
-    box.replaceChildren(h("div", { class: "card" }, h("p", null, h("strong", { text: "No one matches all of these filters." })), h("p", { text: "Try removing a filter above, or choose a different time." }),
-      h("button", { class: "btn", type: "button", text: "Clear all filters", onclick: function () { state.filters = blank(); state.minLevel = ""; syncForm(); renderChips(); loadResults(false); } })));
+    rc(box, h("div", { class: "card" }, h("p", null, h("strong", { text: "No one matches these filters." })), h("p", { text: "Try removing a filter above, or choose a different time." }),
+      h("button", { class: "btn", type: "button", text: "Clear all filters", onclick: clearAll })));
     if (announce) say("No one matches. Try removing a filter.");
     return;
   }
   var top3 = list.filter(function (i) { return i.avail.state === "now"; }).slice(0, 3);
-  box.replaceChildren(head,
-    top3.length > 1 ? h("p", null, h("button", { class: "btn", type: "button", text: "Select the top " + top3.length + " available now", onclick: function () { state.selected = top3.map(function (i) { return i.id; }); state.lastJson = ""; renderResults(false); renderBar(); say(top3.length + " people selected."); } })) : null,
+  rc(box,
+    rel ? h("div", { class: "warn", role: "status" }, h("strong", { text: "No exact match. These are close:" }), h("br"), "We left out " + rel.label + ".") : null,
+    h("p", { class: "meta", text: list.length + (list.length === 1 ? " person" : " people") + (rel ? " are close." : " match.") }),
+    top3.length > 1 ? h("p", null, h("button", { class: "btn", type: "button", text: "Select the top " + top3.length + " available now", onclick: function () { state.selected = top3.map(function (i) { state.names[i.id] = i.name; return i.id; }); state.lastJson = ""; renderResults(false); renderBar(); say(top3.length + " people selected."); } })) : null,
+    rel ? h("p", null, h("button", { class: "btn", type: "button", text: "Clear all filters", onclick: clearAll })) : null,
     list.map(card));
-  if (announce) say(list.length + (list.length === 1 ? " person matches." : " people match."));
+  if (announce) say(rel ? "No exact match. Showing " + list.length + " close matches." : list.length + (list.length === 1 ? " person matches." : " people match."));
 }
 
 function icon(s) { return s === "now" ? "✔" : s === "today" ? "◔" : s === "booked" ? "✖" : "–"; }
@@ -365,7 +438,7 @@ function toggle(i) {
   var at = state.selected.indexOf(i.id);
   if (at >= 0) state.selected.splice(at, 1);
   else if (state.selected.length >= 3) { say("You can ask up to 3 people at once."); alert("You can ask up to 3 people at once. Remove one first."); return; }
-  else state.selected.push(i.id);
+  else { state.selected.push(i.id); state.names[i.id] = i.name; }
   state.lastJson = "";
   renderResults(false); renderBar();
   var b = $('[data-id="' + i.id + '"]'); if (b) b.focus();
@@ -375,7 +448,7 @@ function renderBar() {
   var bar = $("#bar");
   if (!bar) return;
   bar.hidden = state.selected.length === 0;
-  bar.replaceChildren(
+  rc(bar, 
     h("span", { role: "status", text: state.selected.length + " of 3 selected" }),
     h("button", { class: "btn primary", type: "button", text: "Send request", onclick: openDialog }),
     h("button", { class: "btn", type: "button", text: "Clear", onclick: function () { state.selected = []; state.lastJson = ""; renderResults(false); renderBar(); } }));
@@ -383,24 +456,27 @@ function renderBar() {
 
 function openDialog() {
   var dlg = $("#dlg");
-  var names = state.selected.map(function (id) { var x = state.results.filter(function (r) { return r.id === id; })[0]; return x ? x.name : id; });
+  var n = state.selected.length;
+  var names = state.selected.map(function (id) { return state.names[id] || id; });
   var msg = h("p", { class: "msg", role: "alert" });
-  var go = h("button", { class: "btn primary", type: "submit", text: "Send request" });
+  var go = h("button", { class: "btn primary", type: "submit", text: "Send request", disabled: n < 1 || n > 3 });
+  var help = h("p", { id: "rq-help", class: "meta", role: "status", text: n >= 1 && n <= 3 ? "This goes to: " + names.join(", ") + ". The first person to accept gets the job." : "Pick 1 to 3 people above." });
   var form = h("form", { method: "dialog", onsubmit: function (ev) {
     ev.preventDefault();
+    if (state.selected.length < 1 || state.selected.length > 3) { msg.textContent = "Pick 1 to 3 people above."; return; }
     go.disabled = true; msg.textContent = "Sending…";
     api("/api/requests", { filters: state.filters, note: $("#rq-note").value, requesterName: $("#rq-name").value, contact: $("#rq-contact").value, interpreterIds: state.selected })
       .then(function (r) { dlg.close(); state.selected = []; location.hash = "#/request/" + r.id; })
       .catch(function (e) { msg.textContent = e.message; go.disabled = false; });
   } },
     h("h2", { id: "dlg-h", text: "Send your request" }),
-    h("p", { text: "This goes to: " + names.join(", ") + ". The first person to accept gets the job." }),
+    help,
     h("label", { for: "rq-name", text: "Your first name" }), h("input", { id: "rq-name", required: true, maxlength: "40", autocomplete: "given-name" }),
     h("label", { for: "rq-contact", text: "How can we text or email you? (use a fake one in this demo)" }), h("input", { id: "rq-contact", required: true, maxlength: "80", autocomplete: "email" }),
     h("label", { for: "rq-note", text: "Anything else they should know? (optional)" }), h("textarea", { id: "rq-note", rows: "3", maxlength: "500" }),
     msg,
     h("div", { class: "row" }, go, h("button", { class: "btn", type: "button", text: "Cancel", onclick: function () { dlg.close(); } })));
-  dlg.replaceChildren(form);
+  rc(dlg, form);
   dlg.showModal();
   $("#rq-name").focus();
 }
@@ -410,7 +486,7 @@ function viewRequest(id) {
   document.title = "Your request · ACDHH demo";
   var status = h("div", { role: "status", "aria-live": "polite" }, h("p", { class: "skeleton", text: "Loading…" }));
   var msgBox = h("div");
-  main.replaceChildren(h("h1", { tabindex: "-1", text: "Your request" }), status, msgBox);
+  rc(main, h("h1", { tabindex: "-1", text: "Your request" }), status, msgBox);
   var last = "", prev = "";
   function render(r) {
     var kids = [h("div", { class: "card" },
@@ -420,14 +496,14 @@ function viewRequest(id) {
       kids.unshift(h("div", { class: "good" }, "✔ Confirmed: " + r.confirmed.name + " accepted."));
       kids.push(h("div", { class: "card" }, h("h2", { text: "Next steps" }),
         h("ol", null, h("li", { text: r.confirmed.name + " will contact you by text or email: " + r.contact + "." }), h("li", { text: "Share the time and place with the Deaf client." }), h("li", { text: "If plans change, send a new request." }))));
-      msgBox.replaceChildren(msgPanel(r));
+      rc(msgBox, msgPanel(r));
     } else if (r.status === "declined") {
       kids.unshift(h("div", { class: "bad" }, "✖ No one can take this request."));
       kids.push(h("a", { class: "btn primary", href: "#/", text: "Choose other interpreters" }));
     } else {
       kids.unshift(h("div", { class: "warn" }, "◔ Waiting for the first person to accept. This page updates by itself."));
     }
-    status.replaceChildren(kids);
+    rc(status, kids);
     if (prev && prev !== r.status) say(r.status === "confirmed" ? "Confirmed. " + r.confirmed.name + " accepted your request." : "Your request was declined by everyone.");
     prev = r.status;
   }
@@ -436,7 +512,7 @@ function viewRequest(id) {
       var s = JSON.stringify(r);
       if (s !== last) { last = s; render(r); }
       if (r.status !== "pending") stopPolling();
-    }).catch(function (e) { if (!last) status.replaceChildren(errBox(e, load)); });
+    }).catch(function (e) { if (!last) rc(status, errBox(e, load)); });
   }
   load();
   startPolling(load, 5000);
@@ -456,7 +532,7 @@ function msgPanel(r) {
   function show(text) {
     var ta = h("textarea", { id: "cm", rows: "6", readonly: true }, text);
     ta.value = text;
-    out.replaceChildren(h("label", { for: "cm", text: "Message in plain language" }), ta,
+    rc(out, h("label", { for: "cm", text: "Message in plain language" }), ta,
       h("p", null, h("button", { class: "btn", type: "button", text: "Copy message", onclick: function () {
         ta.select();
         (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { say("Copied."); }, function () { document.execCommand("copy"); say("Copied."); });
@@ -471,22 +547,24 @@ function viewStatus() {
   document.title = "My status · ACDHH demo";
   var picker = h("select", { id: "who" });
   var panel = h("div");
-  main.replaceChildren(h("h1", { tabindex: "-1", text: "My status (interpreter page)" }),
+  rc(main, h("h1", { tabindex: "-1", text: "My status (interpreter page)" }),
     h("p", { class: "note", text: "Demo: there are no logins. Pick a made-up interpreter." }),
     h("label", { for: "who", text: "I am" }), picker, panel);
   api("/api/interpreters").then(function (d) {
     var all = d.interpreters.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
     var saved = sessionStorageGet("who");
-    picker.replaceChildren(all.map(function (i) { return h("option", { value: i.id, text: i.name + " (" + i.region + ")" }); }));
-    if (saved) picker.value = saved;
+    rc(picker, all.map(function (i) { return h("option", { value: i.id, text: i.name + " (" + i.region + ")" }); }));
+    var ids = all.map(function (i) { return i.id; });
+    picker.value = saved && ids.indexOf(saved) >= 0 ? saved : (ids[0] || ""); // default to the first person
     picker.addEventListener("change", function () { sessionStorageSet("who", picker.value); draw(); });
     draw();
     startPolling(draw, 5000);
-  }).catch(function (e) { panel.replaceChildren(errBox(e, viewStatus)); });
+  }).catch(function (e) { rc(panel, errBox(e, viewStatus)); });
 
   var forSel = null, lastSig = "";
   function draw() {
     var id = picker.value;
+    if (!id) return;
     Promise.all([api("/api/interpreters"), api("/api/interpreters/" + id + "/requests")]).then(function (res) {
       var me = res[0].interpreters.filter(function (i) { return i.id === id; })[0];
       var reqs = res[1].requests;
@@ -499,14 +577,14 @@ function viewStatus() {
         api("/api/interpreters/" + id + "/status", { status: s, until: until }).then(function () { lastSig = ""; draw(); say("Status changed to " + s + "."); }).catch(function (e) { say(e.message); });
       };
       var btn = function (s, label) { return h("button", { class: "btn big", type: "button", "aria-pressed": String(me.status === s), onclick: function () { setS(s); } }, (me.status === s ? "● " : "○ ") + label); };
-      panel.replaceChildren(
+      rc(panel, 
         h("section", { class: "card", "aria-labelledby": "st-h" },
           h("h2", { id: "st-h", text: "My status now: " + ({ available: "Available now", busy: "Busy", off: "Off" })[me.status] }),
           h("div", { class: "statusbtns", role: "group", "aria-label": "Set my status" }, btn("available", "Available now"), btn("busy", "Busy"), btn("off", "Off")),
           h("label", { for: "for", text: "How long? (for Available or Busy)" }), forSel),
         h("section", { "aria-labelledby": "inc-h" }, h("h2", { id: "inc-h", text: "Requests for me" }),
           reqs.length ? reqs.map(function (r) { return reqCard(r, id); }) : h("p", { class: "card", text: "No requests yet. New ones show up here by themselves." })));
-    }).catch(function (e) { panel.replaceChildren(errBox(e, draw)); });
+    }).catch(function (e) { rc(panel, errBox(e, draw)); });
   }
   function reqCard(r, id) {
     var act = function (a) { api("/api/requests/" + r.id + "/respond", { interpreterId: id, action: a }).then(function () { lastSig = ""; draw(); say(a === "accept" ? "You accepted." : "You declined."); }).catch(function (e) { say(e.message); lastSig = ""; draw(); }); };
@@ -528,24 +606,24 @@ function viewStaff() {
   document.title = "Staff dashboard · ACDHH demo";
   var box = h("div", null, h("p", { class: "skeleton", text: "Loading…" }));
   var resetMsg = h("p", { class: "msg", role: "status" });
-  main.replaceChildren(h("h1", { tabindex: "-1", text: "ACDHH staff dashboard" }), box, resetMsg,
+  rc(main, h("h1", { tabindex: "-1", text: "ACDHH staff dashboard" }), box, resetMsg,
     h("p", null, h("button", { class: "btn danger", type: "button", text: "Reset demo data", onclick: function () {
       if (!confirm("Reset all demo data?")) return;
       api("/api/_reset", {}).then(function () { resetMsg.textContent = "Demo data was reset."; last = ""; load(); }).catch(function (e) { resetMsg.textContent = e.message; });
     } })));
-  var last = "";
+  var last = "", showAll = false;
   function load() {
     api("/api/dashboard").then(function (d) {
       var s = JSON.stringify(d);
       if (s === last) return;
       last = s;
       draw(d);
-    }).catch(function (e) { if (!last) box.replaceChildren(errBox(e, load)); });
+    }).catch(function (e) { if (!last) rc(box, errBox(e, load)); });
   }
   function draw(d) {
     var max = Math.max.apply(null, REGIONS.map(function (r) { return d.availableByRegion[r]; }).concat([1]));
     var tile = function (n, label, alert) { return h("div", { class: "tile" + (alert ? " alert" : "") }, h("b", { text: String(n) }), label); };
-    box.replaceChildren(
+    rc(box, 
       h("div", { class: "tiles" },
         tile(d.availableNow, "available now"), tile(d.requestsToday.length, "requests today"),
         tile(d.avgMinutesToConfirm === null ? "–" : d.avgMinutesToConfirm, "avg. minutes to confirm"),
@@ -557,7 +635,10 @@ function viewStaff() {
           return h("li", { class: "card" }, h("div", { class: "row" }, h("strong", { text: r }), h("span", { text: d.availableByRegion[r] + " available" })), bar);
         }))),
       h("section", { class: "card", "aria-labelledby": "s2" }, h("h2", { id: "s2", text: "Coverage gaps right now" }),
-        d.gaps.length ? d.gaps.map(function (g) { return h("p", { class: "bad" }, "⚠ 0 " + g.specialty + " interpreters available in: " + g.regions.join(", ")); }) : h("p", { class: "good", text: "✔ Every region has someone available for every specialty." })),
+        d.gapList.length ? [
+          (showAll ? d.gapList : d.gapList.slice(0, 3)).map(function (g) { return h("p", { class: "bad" }, "⚠ 0 " + g.specialty + " interpreters available in " + g.region + " right now"); }),
+          d.gapList.length > 3 ? h("button", { class: "btn", type: "button", "aria-expanded": String(showAll), text: showAll ? "Show fewer gaps" : "Show all gaps (" + d.gapList.length + ")", onclick: function () { showAll = !showAll; draw(d); } }) : null
+        ] : h("p", { class: "good", text: "✔ Every region has someone available for every specialty." })),
       h("section", { class: "card", "aria-labelledby": "s3" }, h("h2", { id: "s3", text: "Licenses expiring in 30 days" }),
         d.expiring.length ? h("ul", null, d.expiring.map(function (e) { return h("li", { text: e.name + " (" + e.region + ") · expires " + fmtDate(e.expires) + " · " + e.daysToExpiry + " days" }); })) : h("p", { text: "None." })),
       h("section", { class: "card", "aria-labelledby": "s4" }, h("h2", { id: "s4", text: "Today's requests" }),

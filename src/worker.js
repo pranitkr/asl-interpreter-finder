@@ -57,9 +57,9 @@ const ROWS = [
   ["Elena V.", 0, "A", "LG", "Standard", 90, "a", 0, ""],
   ["Chris B.", 0, "A", "PE", "Advanced", 250, "b", 0, "15-19"],
   ["Tanya S.", 1, "A", "MD", "Advanced", 310, "a", 0, ""],
-  ["Luis M.", 1, "C", "ML", "Master", 450, "b", 0, "16-20"],
+  ["Luis M.", 1, "C", "MLD", "Master", 450, "b", 0, "16-20"],
   ["Hannah P.", 1, "A", "EH", "Standard", 18, "a", 0, ""], // license expiring soon
-  ["Omar F.", 1, "X", "D", "Advanced", 220, "a", 0, ""],
+  ["Omar F.", 1, "X", "DM", "Advanced", 220, "a", 0, ""],
   ["Grace D.", 1, "T", "LV", "Standard", 150, "o", 1, ""],
   ["Ethan J.", 1, "A", "GM", "Provisional", 60, "a", 0, ""],
   ["Naomi A.", 2, "A", "ME", "Advanced", 280, "a", 0, ""],
@@ -80,23 +80,35 @@ const ROWS = [
   ["Pia G.", 6, "C", "VH", "Standard", 160, "o", 1, ""],
 ];
 
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+const TUCSON_DEAFBLIND = ["i09", "i10", "i12"]; // keep the demo sentence working on any day of the week
+
 function seedInterpreters(now) {
   const base = Date.parse(azParts(new Date(now)).date + "T12:00:00Z");
-  return ROWS.map((r, i) => ({
-    id: "i" + String(i + 1).padStart(2, "0"),
-    name: r[0],
-    region: REGIONS[r[1]],
-    services: [...r[2]].map((c) => SC[c]),
-    specialties: [...r[3]].map((c) => PC[c]),
-    level: r[4],
-    expires: new Date(base + r[5] * DAY).toISOString().slice(0, 10),
-    status: { a: "available", b: "busy", o: "off" }[r[6]],
-    until: null,
-    remote: !!r[7] || r[1] === 6,
-    window: r[8] ? r[8].split("-").map(Number) : null, // later today, e.g. [14, 18] = 2-6 PM
-    days: [1, 2, 3, 4, 5], // weekdays they normally work (for future dates)
-    contact: "text or email", // fake: no real contact details in the demo
-  }));
+  return ROWS.map((r, i) => {
+    const id = "i" + String(i + 1).padStart(2, "0");
+    const specialties = [...r[3]].map((c) => PC[c]);
+    let days = [1, 2, 3, 4, 5], hours = [8, 18]; // normal weekday hours
+    if (i % 3 === 0) { days = ALL_DAYS; hours = [8, 20]; } // about a third work weekends and longer days
+    if (TUCSON_DEAFBLIND.includes(id)) { days = ALL_DAYS; hours = [7, 20]; }
+    if (specialties.includes("Emergency")) { days = ALL_DAYS; hours = [0, 24]; } // on call 7 days
+    return {
+      id,
+      name: r[0],
+      region: REGIONS[r[1]],
+      services: [...r[2]].map((c) => SC[c]),
+      specialties,
+      level: r[4],
+      expires: new Date(base + r[5] * DAY).toISOString().slice(0, 10),
+      status: { a: "available", b: "busy", o: "off" }[r[6]],
+      until: null,
+      remote: !!r[7] || r[1] === 6,
+      window: r[8] ? r[8].split("-").map(Number) : null, // later today, e.g. [14, 18] = 2-6 PM
+      days, // days of the week they work (0 = Sunday), used for future dates
+      hours, // [start, end) hour of day on those days
+      contact: "text or email", // fake: no real contact details in the demo
+    };
+  });
 }
 
 function seedRequests(now) {
@@ -125,6 +137,13 @@ function seedRequests(now) {
 }
 
 async function seed(env, now = Date.now()) {
+  // Delete every old request first (including ones made while testing).
+  let cursor;
+  do {
+    const l = await env.DATA.list({ prefix: "req:", cursor });
+    for (const k of l.keys) await env.DATA.delete(k.name);
+    cursor = l.list_complete ? null : l.cursor;
+  } while (cursor);
   await env.DATA.put("interpreters", JSON.stringify(seedInterpreters(now)));
   for (const r of seedRequests(now)) await env.DATA.put("req:" + r.id, JSON.stringify(r));
   await env.DATA.put("seeded", "1");
@@ -178,7 +197,9 @@ function matchesWhen(i, when, now) {
     if (i.window && h >= i.window[0] && h < i.window[1]) return true;
     return st === "available" && (!i.until || Date.parse(i.until) >= t);
   }
-  return i.days.includes(tp.wd) && tp.hour >= 8 && tp.hour < 18; // future day: normal weekday hours
+  const [from, to] = i.hours || [8, 18]; // older saved data may not have hours
+  const hf = tp.hour + tp.minute / 60;
+  return (i.days || [1, 2, 3, 4, 5]).includes(tp.wd) && hf >= from && hf < to;
 }
 
 function daysToExpiry(i, now) {
@@ -194,7 +215,7 @@ function filterInterpreters(list, q, now) {
   const specs = q.specialty ? q.specialty.split(",").map((s) => s.trim()).filter(Boolean) : [];
   const out = list.filter((i) => {
     if (q.service && !i.services.includes(q.service)) return false;
-    if (specs.length && !specs.every((s) => i.specialties.includes(s))) return false;
+    if (specs.length && !specs.some((s) => i.specialties.includes(s))) return false; // any one specialty is enough
     if (q.remote && !i.remote) return false;
     if (q.region) {
       const same = i.region === q.region;
@@ -204,9 +225,10 @@ function filterInterpreters(list, q, now) {
     return matchesWhen(i, q.when, now);
   });
   const rank = { now: 0, today: 1, booked: 2, off: 3 };
+  // People who match more of the chosen specialties come first, then available-now first, then license level.
   return out
-    .map((i) => present(i, now))
-    .sort((a, b) => rank[a.avail.state] - rank[b.avail.state] || LEVELS[b.level] - LEVELS[a.level] || a.name.localeCompare(b.name));
+    .map((i) => ({ ...present(i, now), matched: specs.filter((s) => i.specialties.includes(s)).length }))
+    .sort((a, b) => b.matched - a.matched || rank[a.avail.state] - rank[b.avail.state] || LEVELS[b.level] - LEVELS[a.level] || a.name.localeCompare(b.name));
 }
 
 // ---------- Validation of filters (used for AI output AND for request bodies) ----------
@@ -227,6 +249,38 @@ function cleanFilters(f) {
     locationType: LOCATION_TYPES.includes(f.locationType) ? f.locationType : null,
     city: city || null,
   };
+}
+
+// The model sometimes guesses. These checks use the user's own words instead.
+const SERVICE_WORDS = {
+  "CDI/Deaf interpreter": /\bcdi\b|deaf interpreter|certified deaf/i,
+  "Captioner/CART": /caption|\bcart\b|transcri/i,
+  "Tactile/ProTactile": /tactile/i, // also matches ProTactile
+  "ASL interpreter": /\basl\b/i,
+};
+function remoteFromText(text) {
+  if (/\bremote(ly)?\b|video|zoom|\bvri\b|online/i.test(text)) return true;
+  if (/in[- ]person|on[- ]?site/i.test(text)) return false;
+  return null;
+}
+
+// One plain sentence built by the Worker from the CLEANED filters (never from model text).
+function understoodText(f) {
+  const parts = [];
+  if (f.service) parts.push(f.service);
+  if (f.specialties.length) parts.push(f.specialties.join(" and "));
+  if (f.locationType && f.locationType !== "other") parts.push("at " + (f.locationType === "event" ? "an " : "a ") + f.locationType);
+  if (f.region) parts.push("in " + f.region);
+  if (f.when === "now") parts.push("right now");
+  else if (f.when === "today") parts.push("today");
+  else if (f.when) {
+    const d = new Date(f.when);
+    parts.push(d.toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" }) + " at " + d.toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" }));
+  }
+  if (f.durationMins) parts.push("about " + (f.durationMins % 60 === 0 ? f.durationMins / 60 + (f.durationMins === 60 ? " hour" : " hours") : f.durationMins + " minutes"));
+  if (f.remote === true) parts.push("remote is OK");
+  else if (f.remote === false) parts.push("on-site");
+  return parts.length ? "Looking for: " + parts.join(", ") + "." : "I could not find any details. Please use the filters.";
 }
 
 function describe(f) {
@@ -374,8 +428,9 @@ async function handleApi(request, env, url) {
     }
     if (!parsed) return err(502, "Smart search could not read that. Please use the filters.");
     const filters = cleanFilters(parsed);
-    const understood = str(parsed.understood, 200) || "Looking for: " + describe(filters) + ".";
-    return json({ filters, understood });
+    if (filters.service && !SERVICE_WORDS[filters.service].test(text)) filters.service = null; // no keyword, no service
+    filters.remote = remoteFromText(text);
+    return json({ filters, understood: understoodText(filters) });
   }
 
   // --- Requests ---
@@ -445,6 +500,8 @@ async function handleApi(request, env, url) {
       specialty: s,
       regions: GEO_REGIONS.filter((r) => !free.some((i) => i.region === r && i.specialties.includes(s))),
     })).filter((g) => g.regions.length);
+    // Flat list, most important specialties first (Yuma/Western comes before Prescott and Eastern in the seed).
+    const gapList = gaps.flatMap((g) => g.regions.map((region) => ({ specialty: g.specialty, region })));
     const today = azParts(new Date(now)).date;
     const reqs = (await listRequests(env)).filter((r) => azParts(new Date(r.createdAt)).date === today);
     const rows = reqs.map((r) => {
@@ -461,6 +518,7 @@ async function handleApi(request, env, url) {
       availableNow: free.length,
       availableByRegion: byRegion,
       gaps,
+      gapList,
       expiring: list.filter((i) => i.daysToExpiry <= 30).map((i) => ({ id: i.id, name: i.name, region: i.region, expires: i.expires, daysToExpiry: i.daysToExpiry })).sort((a, b) => a.daysToExpiry - b.daysToExpiry),
       requestsToday: rows,
       avgMinutesToConfirm: times.length ? Math.round((times.reduce((a, b) => a + b, 0) / times.length) * 10) / 10 : null,
@@ -497,7 +555,7 @@ async function handleApi(request, env, url) {
 }
 
 const SECURITY = {
-  "content-security-policy": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+  "content-security-policy": "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
   "x-content-type-options": "nosniff",
   "referrer-policy": "no-referrer",
 };
