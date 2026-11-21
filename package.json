@@ -1,0 +1,16 @@
+{
+  "name": "asl-interpreter-finder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart directory to find ASL interpreters and captioners in Arizona (ACDHH hackathon demo)",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node tests/api.test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}
